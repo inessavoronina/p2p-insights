@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TB_QA P2P chat — reasons & correlations</title>
+<style>
+  :root{
+    --bg:#0b1020; --panel:#ffffff; --ink:#111827; --muted:#6b7280;
+    --line:#e5e7eb; --accent:#c2410c; --cool:#1d4ed8; --chip:#f3f4f6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--ink);background:#f6f7f9;line-height:1.45}
+  header{background:linear-gradient(135deg,#0b1020,#1e293b);color:#fff;padding:32px 24px}
+  header h1{margin:0 0 6px;font-size:24px}
+  header p{margin:2px 0;color:#cbd5e1;font-size:14px}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:18px 0;
+          box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  h2{font-size:19px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+  .row{display:flex;align-items:center;gap:10px;margin:7px 0}
+  .row .name{width:200px;font-size:13px;flex:none}
+  .row .barwrap{flex:1;background:var(--chip);border-radius:6px;height:22px;position:relative;overflow:hidden}
+  .row .bar{height:100%;border-radius:6px}
+  .row .val{width:70px;text-align:right;font-variant-numeric:tabular-nums;font-size:13px;flex:none;color:var(--muted)}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  td.def{color:var(--muted);font-size:12.5px}
+  .tag{display:inline-block;background:var(--chip);border-radius:999px;padding:2px 9px;font-size:12px;color:#374151;margin:2px 4px 2px 0}
+  /* heatmap */
+  .hm{overflow-x:auto}
+  table.heat{border-collapse:separate;border-spacing:2px}
+  table.heat th{font-size:11px;text-transform:none;letter-spacing:0;color:#374151;text-align:center;padding:6px 6px}
+  table.heat td{border:none;text-align:center;font-variant-numeric:tabular-nums;font-size:12px;padding:7px 6px;border-radius:5px;min-width:46px}
+  table.heat td.topic{text-align:left;background:#fff!important;color:var(--ink);font-weight:600;min-width:170px;white-space:nowrap}
+  .grp{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:center;padding-bottom:2px}
+  .legend{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:12px;flex-wrap:wrap}
+  .legend .sw{width:18px;height:14px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.06)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 26px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}.row .name{width:130px}}
+  .note{font-size:12.5px;color:var(--muted);background:#fafafa;border-left:3px solid var(--line);padding:10px 12px;border-radius:0 8px 8px 0;margin-top:14px}
+  .v-strong{color:#065f46;font-weight:600}.v-mid{color:#92400e;font-weight:600}.v-weak{color:#6b7280}
+  code{background:#f1f5f9;padding:1px 5px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>TB_QA P2P chat — reasons people chat & what correlates</h1>
+  <p>talabat Qatar · customer ↔ rider in-app chat · 12 months (Jun 2025 – Jun 2026) · 2,812,369 valid chats</p>
+  <p>Correlation study. Findings are associations, not causes. No € sizing.</p>
+</header>
+
+<div class="wrap">
+
+  
+
+  <!-- OUTCOME -->
+  <section>
+    <h2>1. Delivered vs cancelled orders, per chat reason — split by who started the chat</h2>
+    <p class="sub">Number of chats on delivered vs cancelled orders, per chat reason, split by <b>who sent the first message</b> (customer-started vs rider-started). The chat reason is read from the <b>whole conversation</b> (both sides' messages), not only the starter's. "Cancelled" = the order failed (<code>is_failed</code>); "% on cancelled" = share of that reason's chats that sat on a cancelled order. Overall cancel rate ≈ 3.4%. <b>Click any row</b> to see the order's recorded cancel reason for those chats.</p>
+
+    <div style="font-size:15px;font-weight:700;color:#2563eb;margin:8px 0 8px">▸ Customer-started chats</div>
+    <table>
+      <thead><tr><th>Chat reason</th><th>Delivered</th><th>Cancelled</th><th>Total</th></tr></thead>
+      <tbody id="countTableCust"></tbody>
+    </table>
+
+    <div style="font-size:15px;font-weight:700;color:#0d9488;margin:24px 0 8px">▸ Rider-started chats</div>
+    <table>
+      <thead><tr><th>Chat reason</th><th>Delivered</th><th>Cancelled</th><th>Total</th></tr></thead>
+      <tbody id="countTableRider"></tbody>
+    </table>
+    <h3 style="font-size:14px;margin:22px 0 4px">Cancel rate by reason — share of each reason's chats that were on a cancelled order</h3>
+    <p class="sub" style="margin-bottom:10px">Dashed line = overall 3.4% base rate. Bars above it = reasons that skew toward cancelled orders.</p>
+    <div id="cancRateBars"></div>
+    <h3 style="font-size:14px;margin:24px 0 4px">Topic share within each outcome group</h3>
+    <p class="sub" style="margin-bottom:10px">How the topic mix differs between the two groups (each group sums to 100%). Association V=0.237.</p>
+    <div id="outBars"></div>
+    <div class="note">Of all chats, only ~3.4% sit on cancelled orders — but that rate swings sharply by reason. <code>cancellation</code> chats are 52.9% on cancelled orders, <code>WhatsApp / alt contact</code> 7.1%, <code>item / order problem</code> 5.4%, while <code>leave at door</code> (0.9%) and <code>don't ring</code> (1.1%) almost never appear on cancelled orders — those happen only once the rider has reached the door.</div>
+  </section>
+
+  <!-- TOPICS -->
+  <section>
+    <h2>2. Chat reasons — split by who started the chat</h2>
+    <p class="sub">11 topics built by classifying 2.64M transcripts (~93–95% accuracy). Two groups: chats the <b>customer</b> started vs chats the <b>rider</b> started. Each list is ranked and each sums to 100% of its own group. Bars show the share of reasons within that group.</p>
+    <div class="grid2" style="gap:8px 30px">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#2563eb;margin-bottom:2px">Customer started the chat</div>
+        <div class="sub" style="margin-bottom:12px">1,599,291 chats · 56.9% of all chats</div>
+        <div id="custGroup"></div>
+      </div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#0d9488;margin-bottom:2px">Rider started the chat</div>
+        <div class="sub" style="margin-bottom:12px">1,213,078 chats · 43.1% of all chats</div>
+        <div id="riderGroup"></div>
+      </div>
+    </div>
+    <table style="margin-top:20px">
+      <thead><tr><th>Chat reason</th><th>Customer-started</th><th>Rider-started</th><th>What it is</th></tr></thead>
+      <tbody id="topicTable"></tbody>
+    </table>
+    <div class="note"><b>Different chats, different jobs.</b> When a customer starts a chat it is mostly <code>address &amp; directions</code> (32.6%) plus contact and delivery preferences. When a rider starts a chat it is overwhelmingly <code>rider arrival</code> (60.7%). Only <code>rider arrival</code> and <code>other</code> appear high in both lists; every other reason is essentially customer-driven.</div>
+
+    <h3 style="font-size:14px;margin:22px 0 4px">Real customer messages — "Address &amp; directions" instructions</h3>
+    <p class="sub" style="margin-bottom:10px">Actual unaltered customer messages (original text), top 20 by frequency over 12 months, for the #1 customer-started reason. The count after each is how many times that exact message was sent.</p>
+    <div id="addrMsgs"></div>
+    <div class="note">Customers are filling the gaps the stored address leaves: <b>floor / level</b>, a <b>bell instruction</b> (ring or don't ring), and a <b>unit identifier</b> (villa / gate / building). This is exactly the granularity missing from the app address — and why "unable to find" dominates the cancellations on these chats.</div>
+  </section>
+
+  <!-- HEATMAP -->
+  <section>
+    <h2>3. The correlation map — topic × factor lift</h2>
+    <p class="sub">Each cell = how much more/less likely a topic is within that group vs its overall average (<b>lift</b>). 1.0 = average. <span style="color:var(--accent);font-weight:600">Warm</span> = over-represented, <span style="color:var(--cool);font-weight:600">cool</span> = under-represented. Hover a cell for the exact value.</p>
+    <div class="hm"><table class="heat" id="heat"></table></div>
+    <div class="legend">
+      <span>Under-represented</span>
+      <span class="sw" style="background:#1d4ed8"></span>
+      <span class="sw" style="background:#90a8ec"></span>
+      <span class="sw" style="background:#f3f4f6"></span>
+      <span class="sw" style="background:#e8a87c"></span>
+      <span class="sw" style="background:#c2410c"></span>
+      <span>Over-represented · 1.0 = average</span>
+    </div>
+    <div class="note">Read the columns: <b>Rider</b> chats are almost all arrival announcements; <b>Customer</b> chats spread across address, contact, payment and preferences. <b>Cancelled</b> orders light up on <code>cancellation</code> (16× vs average) and go dark on <code>address &amp; directions</code> and <code>leave at door</code>. <b>Night</b> over-indexes on <code>don't ring</code> and <code>cancellation</code>; <b>morning</b> on <code>leave at door</code>. <b>Weekday/weekend</b> columns are almost all flat — the visual proof that day of week doesn't matter.</div>
+  </section>
+
+  <!-- INITIATOR -->
+  <section>
+    <h2>4. Who starts the chat decides the topic</h2>
+    <p class="sub">Share of chats within each initiator group. The strongest pattern in the study (V=0.61).</p>
+    <div id="initBars"></div>
+  </section>
+
+  <!-- CORRELATION STRENGTH -->
+  <section>
+    <h2>5. Which factors correlate with the topic — strength</h2>
+    <p class="sub">Cramér's V (0–1): how strongly each factor moves topic mix, all on one identical base of 2,672,704 chats. ~0.1 small · ~0.3 medium · ~0.5+ large.</p>
+    <div id="vBars"></div>
+    <div class="note">Who <b>starts</b> the chat dominates everything (V=0.61). Whether the order was <b>cancelled</b> is the next strongest (V=0.24). Time of day and order type are small; <b>weekday vs weekend barely matters</b> (V=0.02).</div>
+  </section>
+
+
+  <section style="background:transparent;border:none;box-shadow:none;color:var(--muted);font-size:12px;padding-top:0">
+    Source data: <code>report/data/phase-phase_*.csv</code> · full write-ups: <code>report/phases/</code> · narrative report: <code>report/report.md</code>.
+    Lift = topic share within group ÷ overall topic share. Cancellation lift on cancelled orders capped at colour scale; actual value 15.6× shown in cell.
+  </section>
+
+</div>
+
+<script>
+const fmtPct = v => v.toFixed(v<10?2:1)+'%';
+const topics = [
+  {k:'rider_arrival_announce', label:"Rider arrival / “I'm here”", def:'“talabat outside”, “waiting at the gate”, “on my way”', share:30.91, cust:8.46, rider:60.68, canc:34.74, deliv:30.66, cancN:31420, delivN:791277},
+  {k:'address_navigation', label:'Address & directions', def:'building / floor / villa / gate / access code / how to reach', share:23.60, cust:32.58, rider:11.62, canc:11.38, deliv:24.05, cancN:10291, delivN:620738},
+  {k:'other', label:'Other / short text', def:'greetings, 1–10 char texts, ambiguous or non-Latin', share:23.05, cust:23.08, rider:22.91, canc:26.33, deliv:22.88, cancN:23817, delivN:590682},
+  {k:'call_me_contact', label:'Call me / phone number', def:'“call me”, phone number shared in the chat', share:4.73, cust:7.92, rider:0.57, canc:3.39, deliv:4.83, cancN:3065, delivN:124608},
+  {k:'handover_leave_at_door', label:'Leave at door / handover', def:'“leave at door / reception / locker”, nobody home', share:4.40, cust:6.03, rider:2.26, canc:1.14, deliv:4.53, cancN:1029, delivN:117040},
+  {k:'eta_urgency', label:'ETA / urgency', def:'“how many minutes”, “where are you”, “come fast”, late', share:4.20, cust:6.93, rider:0.58, canc:5.41, deliv:4.17, cancN:4898, delivN:107670},
+  {k:'cash_payment', label:'Cash & payment', def:'change, cash, card, 500 QR, ATM', share:3.30, cust:5.46, rider:0.46, canc:2.06, deliv:3.37, cancN:1864, delivN:87038},
+  {k:'no_call_no_bell', label:"Don't call / don't ring", def:'“don’t ring the bell”, baby / kids sleeping, silent delivery', share:2.80, cust:4.90, rider:0.07, canc:0.89, deliv:2.90, cancN:808, delivN:74885},
+  {k:'item_order_problem', label:'Item / order problem', def:'wrong or missing item, not ready, substitution', share:1.80, cust:2.74, rider:0.54, canc:2.87, deliv:1.76, cancN:2594, delivN:45344},
+  {k:'cancellation', label:'Cancellation', def:'“cancel”, “do not deliver”, “stop the order”', share:0.67, cust:1.05, rider:0.18, canc:10.66, deliv:0.33, cancN:9643, delivN:8577},
+  {k:'whatsapp_alt_contact', label:'WhatsApp / alt contact', def:'move to WhatsApp, share location there', share:0.54, cust:0.84, rider:0.13, canc:1.13, deliv:0.52, cancN:1024, delivN:13333},
+];
+
+const factorV = [
+  {f:'Initiator (customer / rider)', v:0.610, cls:'v-strong'},
+  {f:'Order outcome (cancelled / delivered)', v:0.237, cls:'v-mid'},
+  {f:'Order type / vertical', v:0.073, cls:'v-weak'},
+  {f:'Hour of day', v:0.052, cls:'v-weak'},
+  {f:'Weekday vs weekend', v:0.016, cls:'v-weak'},
+];
+
+// 2 real example messages per reason, from customers and from riders (most frequent short messages)
+const examples = {
+  rider_arrival_announce:{c:["coming down","i am outside"], r:["i'm here","talabat outside"]},
+  address_navigation:{c:["first floor","ring the bell"], r:["building number","what is your building number"]},
+  other:{c:["hello","thank you"], r:["i can't find your address","ok sir"]},
+  call_me_contact:{c:["call me","call this number"], r:["please call me","call me sir"]},
+  handover_leave_at_door:{c:["please leave at the door","please leave with security"], r:["i will leave the order at the doorstep","i give to reception"]},
+  eta_urgency:{c:["where are you","how many minutes"], r:["where are you sir","please come fast"]},
+  cash_payment:{c:["please bring change for 500","i have 500"], r:["i don't have change","keep change"]},
+  no_call_no_bell:{c:["don't ring the bell","don't call"], r:["no call","no bell"]},
+  item_order_problem:{c:["where is my order","still not ready?"], r:["the restaurant is preparing the food","order not ready"]},
+  cancellation:{c:["cancel the order","i want to cancel my order"], r:["i can't cancel","please cancel the order"]},
+  whatsapp_alt_contact:{c:["check whatsapp location","send me your whatsapp number"], r:["send me location on whatsapp","my whatsapp number"]},
+};
+
+// real, unaltered customer messages classified as Address & directions (top 20 by frequency)
+const addrCustomerMsgs = [["First floor",5087],["Ring the bell",2807],["1st floor",2541],["Ground floor",2295],["2nd floor",2123],["Second floor",2054],["Floor 2",1844],["Ring the doorbell",1732],["Floor 1",1731],["3rd floor",1617],["Floor 3",1402],["Ring bell",1183],["Please ring the bell",1150],["Floor 5",949],["Ring the bell please",932],["Villa 3",888],["Please ring the bell when you are outside the house. Thank you",870],["4th floor",850],["Villa 11",814],["Gate 3",807]];
+
+const failReasons = [
+  {r:'UNABLE_TO_FIND', p:39.8},{r:'FRAUD_PRANK', p:12.0},{r:'LATE_DELIVERY', p:9.0},
+  {r:'FOOD_QUALITY_SPILLAGE', p:6.4},{r:'DELAY_CUSTOMER_LEFT', p:5.2},{r:'UNPROFESSIONAL_BEHAVIOUR', p:5.1},
+  {r:'ITEM_UNAVAILABLE', p:4.1},{r:'WRONG_ORDER_ITEMS_DELIVERED', p:3.8},{r:'COURIER_UNREACHABLE', p:3.0},
+  {r:'ORDER_MODIFICATION_NOT_POSSIBLE', p:2.8},
+];
+
+// cancel reasons WITHIN each chat reason (top reasons + remainder), % of that reason's cancelled chats
+const failureByTopic = {
+  rider_arrival_announce:[['UNABLE_TO_FIND',65.2],['FRAUD_PRANK',9.2],['DELAY_CUSTOMER_LEFT',5.2],['UNPROFESSIONAL_BEHAVIOUR',4.6],['FOOD_QUALITY_SPILLAGE',3.6],['LATE_DELIVERY',3.3],['WRONG_ORDER_ITEMS_DELIVERED',2.5],['COURIER_UNREACHABLE',2.1],['Other reasons',4.3]],
+  address_navigation:[['UNABLE_TO_FIND',43.1],['FOOD_QUALITY_SPILLAGE',12.4],['FRAUD_PRANK',8.0],['UNPROFESSIONAL_BEHAVIOUR',7.3],['WRONG_ORDER_ITEMS_DELIVERED',6.5],['LATE_DELIVERY',5.7],['DELAY_CUSTOMER_LEFT',3.9],['ADDRESS_INCOMPLETE_MISSTATED',3.0],['Other reasons',10.1]],
+  other:[['UNABLE_TO_FIND',30.9],['FRAUD_PRANK',11.0],['LATE_DELIVERY',10.7],['ITEM_UNAVAILABLE',6.0],['FOOD_QUALITY_SPILLAGE',5.6],['UNPROFESSIONAL_BEHAVIOUR',5.2],['DELAY_CUSTOMER_LEFT',4.8],['COURIER_UNREACHABLE',3.6],['Other reasons',22.2]],
+  call_me_contact:[['FOOD_QUALITY_SPILLAGE',20.0],['UNABLE_TO_FIND',12.6],['ITEM_UNAVAILABLE',10.8],['WRONG_ORDER_ITEMS_DELIVERED',9.8],['FRAUD_PRANK',9.7],['UNPROFESSIONAL_BEHAVIOUR',6.8],['LATE_DELIVERY',6.7],['COURIER_UNREACHABLE',3.3],['Other reasons',20.3]],
+  handover_leave_at_door:[['UNPROFESSIONAL_BEHAVIOUR',23.3],['UNABLE_TO_FIND',21.4],['FOOD_QUALITY_SPILLAGE',14.6],['WRONG_ORDER_ITEMS_DELIVERED',13.1],['ITEM_UNAVAILABLE',4.6],['COURIER_UNREACHABLE',4.1],['LATE_DELIVERY',3.7],['FRAUD_PRANK',3.5],['Other reasons',11.7]],
+  eta_urgency:[['LATE_DELIVERY',25.8],['FOOD_QUALITY_SPILLAGE',10.7],['UNABLE_TO_FIND',9.3],['COURIER_UNREACHABLE',7.8],['DELAY_CUSTOMER_LEFT',6.5],['FRAUD_PRANK',5.7],['UNPROFESSIONAL_BEHAVIOUR',4.8],['MISTAKE_ERROR',4.4],['Other reasons',25.0]],
+  cash_payment:[['FRAUD_PRANK',20.1],['UNABLE_TO_FIND',11.6],['LATE_DELIVERY',8.7],['FOOD_QUALITY_SPILLAGE',8.4],['ORDER_MODIFICATION_NOT_POSSIBLE',8.3],['UNPROFESSIONAL_BEHAVIOUR',7.2],['ITEM_UNAVAILABLE',5.6],['WRONG_ORDER_ITEMS_DELIVERED',4.8],['Other reasons',25.3]],
+  no_call_no_bell:[['FOOD_QUALITY_SPILLAGE',26.9],['WRONG_ORDER_ITEMS_DELIVERED',13.6],['UNABLE_TO_FIND',9.2],['ITEM_UNAVAILABLE',8.3],['UNPROFESSIONAL_BEHAVIOUR',7.3],['LATE_DELIVERY',7.3],['FRAUD_PRANK',6.4],['MISTAKE_ERROR',3.6],['Other reasons',17.4]],
+  item_order_problem:[['LATE_DELIVERY',26.4],['DELAY_CUSTOMER_LEFT',12.6],['ITEM_UNAVAILABLE',7.9],['COURIER_UNREACHABLE',7.1],['WRONG_ORDER_ITEMS_DELIVERED',6.5],['FOOD_QUALITY_SPILLAGE',6.0],['FRAUD_PRANK',4.7],['UNABLE_TO_FIND',4.6],['Other reasons',24.2]],
+  cancellation:[['FRAUD_PRANK',28.5],['ORDER_MODIFICATION_NOT_POSSIBLE',12.5],['LATE_DELIVERY',11.7],['UNABLE_TO_FIND',8.4],['ITEM_UNAVAILABLE',7.8],['MISTAKE_ERROR',6.9],['DELAY_CUSTOMER_LEFT',5.2],['TOO_BUSY',3.0],['Other reasons',16.0]],
+  whatsapp_alt_contact:[['UNABLE_TO_FIND',29.8],['FRAUD_PRANK',19.6],['LATE_DELIVERY',10.4],['COURIER_UNREACHABLE',6.6],['DELAY_CUSTOMER_LEFT',5.5],['UNPROFESSIONAL_BEHAVIOUR',4.9],['ADDRESS_INCOMPLETE_MISSTATED',4.7],['FOOD_QUALITY_SPILLAGE',4.7],['Other reasons',13.8]],
+};
+
+// lift matrix: [cust,rid, canc,deliv, food,ls,dmart, night,morn,aft,eve, wd,we]
+const cols = [
+  {g:'Initiator (V=0.61)', items:[['Customer','cust'],['Rider','rid']]},
+  {g:'Outcome (V=0.24)', items:[['Cancelled','canc'],['Delivered','deliv']]},
+  {g:'Vertical (V=0.07)', items:[['Food','food'],['Local Shops','ls'],['Dmarts','dmart']]},
+  {g:'Hour band (V=0.05)', items:[['Night','night'],['Morning','morn'],['Afternoon','aft'],['Evening','eve']]},
+  {g:'Day (V=0.02)', items:[['Weekday','wd'],['Weekend','we']]},
+];
+const lift = {
+  rider_arrival_announce:{cust:0.275,rid:1.971,canc:1.128,deliv:0.996,food:0.981,ls:0.985,dmart:1.166,night:1.117,morn:0.917,aft:0.972,eve:1.017,wd:1.000,we:0.999},
+  address_navigation:{cust:1.380,rid:0.492,canc:0.482,deliv:1.018,food:1.010,ls:0.975,dmart:0.965,night:0.847,morn:1.037,aft:1.051,eve:0.994,wd:1.000,we:0.999},
+  other:{cust:1.003,rid:0.996,canc:1.144,deliv:0.995,food:1.024,ls:0.969,dmart:0.872,night:0.912,morn:1.074,aft:1.046,eve:0.961,wd:1.003,we:0.993},
+  call_me_contact:{cust:1.659,rid:0.118,canc:0.709,deliv:1.010,food:0.993,ls:1.012,dmart:1.032,night:1.042,morn:0.960,aft:0.980,eve:1.019,wd:1.001,we:0.998},
+  handover_leave_at_door:{cust:1.364,rid:0.512,canc:0.258,deliv:1.026,food:0.837,ls:1.526,dmart:1.343,night:0.760,morn:1.405,aft:1.012,eve:0.910,wd:1.028,we:0.935},
+  eta_urgency:{cust:1.644,rid:0.138,canc:1.285,deliv:0.990,food:1.120,ls:0.799,dmart:0.447,night:1.168,morn:0.759,aft:0.969,eve:1.066,wd:0.978,we:1.052},
+  cash_payment:{cust:1.643,rid:0.140,canc:0.619,deliv:1.013,food:1.018,ls:0.932,dmart:0.979,night:0.965,morn:1.017,aft:1.001,eve:1.005,wd:1.009,we:0.980},
+  no_call_no_bell:{cust:1.729,rid:0.024,canc:0.315,deliv:1.024,food:0.857,ls:1.407,dmart:1.386,night:1.614,morn:0.928,aft:0.663,eve:1.108,wd:0.980,we:1.046},
+  item_order_problem:{cust:1.524,rid:0.299,canc:1.598,deliv:0.979,food:1.193,ls:0.640,dmart:0.168,night:1.142,morn:0.846,aft:0.917,eve:1.085,wd:0.952,we:1.113},
+  cancellation:{cust:1.545,rid:0.271,canc:15.627,deliv:0.487,food:1.027,ls:0.987,dmart:0.826,night:1.473,morn:0.834,aft:0.849,eve:1.034,wd:0.985,we:1.036},
+  whatsapp_alt_contact:{cust:1.569,rid:0.238,canc:2.106,deliv:0.961,food:1.046,ls:0.901,dmart:0.827,night:0.966,morn:0.919,aft:0.975,eve:1.067,wd:0.994,we:1.014},
+};
+
+// delivered/cancelled counts per reason, split by initiator: [cancelledN, deliveredN]
+const initCounts = {"customer": {"address_navigation": [4446, 493949], "other": [10931, 341943], "rider_arrival_announce": [2671, 126758], "call_me_contact": [2513, 118713], "eta_urgency": [4369, 101552], "handover_leave_at_door": [660, 91551], "cash_payment": [1595, 81995], "no_call_no_bell": [774, 74149], "item_order_problem": [2294, 39522], "cancellation": [8456, 7653], "whatsapp_alt_contact": [910, 11985]}, "rider": {"rider_arrival_announce": [28749, 664517], "other": [12886, 248739], "address_navigation": [5845, 126789], "handover_leave_at_door": [370, 25488], "eta_urgency": [529, 6118], "call_me_contact": [553, 5894], "item_order_problem": [300, 5822], "cash_payment": [269, 5043], "cancellation": [1187, 924], "whatsapp_alt_contact": [114, 1348], "no_call_no_bell": [34, 736]}};
+// cancel reasons within each reason's cancelled chats, split by initiator (top 8 + Other)
+const failByInit = {"customer": {"address_navigation": [["FOOD_QUALITY_SPILLAGE", 24.6], ["UNABLE_TO_FIND", 12.8], ["WRONG_ORDER_ITEMS_DELIVERED", 12.5], ["UNPROFESSIONAL_BEHAVIOUR", 9.9], ["LATE_DELIVERY", 9.0], ["FRAUD_PRANK", 8.0], ["ITEM_UNAVAILABLE", 5.2], ["COURIER_UNREACHABLE", 3.1], ["Other reasons", 14.9]], "call_me_contact": [["FOOD_QUALITY_SPILLAGE", 23.9], ["WRONG_ORDER_ITEMS_DELIVERED", 11.4], ["FRAUD_PRANK", 10.0], ["UNABLE_TO_FIND", 9.4], ["ITEM_UNAVAILABLE", 9.2], ["UNPROFESSIONAL_BEHAVIOUR", 7.0], ["LATE_DELIVERY", 6.5], ["COURIER_UNREACHABLE", 3.1], ["Other reasons", 19.5]], "cancellation": [["FRAUD_PRANK", 29.1], ["ORDER_MODIFICATION_NOT_POSSIBLE", 13.8], ["LATE_DELIVERY", 12.0], ["UNABLE_TO_FIND", 7.5], ["MISTAKE_ERROR", 7.1], ["ITEM_UNAVAILABLE", 7.0], ["DELAY_CUSTOMER_LEFT", 5.3], ["COURIER_UNREACHABLE", 3.0], ["Other reasons", 15.2]], "cash_payment": [["FRAUD_PRANK", 17.2], ["UNABLE_TO_FIND", 10.0], ["ORDER_MODIFICATION_NOT_POSSIBLE", 9.3], ["LATE_DELIVERY", 9.2], ["FOOD_QUALITY_SPILLAGE", 9.1], ["UNPROFESSIONAL_BEHAVIOUR", 7.0], ["ITEM_UNAVAILABLE", 6.0], ["MISTAKE_ERROR", 5.4], ["Other reasons", 26.8]], "eta_urgency": [["LATE_DELIVERY", 27.9], ["FOOD_QUALITY_SPILLAGE", 11.7], ["COURIER_UNREACHABLE", 8.4], ["DELAY_CUSTOMER_LEFT", 6.6], ["FRAUD_PRANK", 4.9], ["MISTAKE_ERROR", 4.8], ["UNPROFESSIONAL_BEHAVIOUR", 4.7], ["WRONG_ORDER_ITEMS_DELIVERED", 4.4], ["Other reasons", 26.6]], "handover_leave_at_door": [["UNPROFESSIONAL_BEHAVIOUR", 25.0], ["FOOD_QUALITY_SPILLAGE", 19.5], ["WRONG_ORDER_ITEMS_DELIVERED", 16.2], ["ITEM_UNAVAILABLE", 7.0], ["UNABLE_TO_FIND", 6.2], ["COURIER_UNREACHABLE", 5.3], ["LATE_DELIVERY", 4.5], ["FRAUD_PRANK", 2.4], ["Other reasons", 13.9]], "item_order_problem": [["LATE_DELIVERY", 28.3], ["DELAY_CUSTOMER_LEFT", 13.1], ["COURIER_UNREACHABLE", 7.2], ["ITEM_UNAVAILABLE", 6.9], ["WRONG_ORDER_ITEMS_DELIVERED", 6.3], ["FOOD_QUALITY_SPILLAGE", 6.1], ["FRAUD_PRANK", 4.4], ["TOO_BUSY", 3.6], ["Other reasons", 24.1]], "no_call_no_bell": [["FOOD_QUALITY_SPILLAGE", 27.9], ["WRONG_ORDER_ITEMS_DELIVERED", 14.2], ["ITEM_UNAVAILABLE", 8.5], ["UNABLE_TO_FIND", 7.6], ["LATE_DELIVERY", 7.4], ["UNPROFESSIONAL_BEHAVIOUR", 7.2], ["FRAUD_PRANK", 5.9], ["MISTAKE_ERROR", 3.7], ["Other reasons", 17.6]], "other": [["LATE_DELIVERY", 17.5], ["FRAUD_PRANK", 11.5], ["FOOD_QUALITY_SPILLAGE", 8.9], ["ITEM_UNAVAILABLE", 7.6], ["ORDER_MODIFICATION_NOT_POSSIBLE", 6.0], ["MISTAKE_ERROR", 5.7], ["COURIER_UNREACHABLE", 5.4], ["WRONG_ORDER_ITEMS_DELIVERED", 5.1], ["Other reasons", 32.3]], "rider_arrival_announce": [["UNABLE_TO_FIND", 22.8], ["FOOD_QUALITY_SPILLAGE", 13.7], ["FRAUD_PRANK", 13.3], ["LATE_DELIVERY", 11.7], ["WRONG_ORDER_ITEMS_DELIVERED", 6.8], ["DELAY_CUSTOMER_LEFT", 6.1], ["COURIER_UNREACHABLE", 5.5], ["UNPROFESSIONAL_BEHAVIOUR", 4.5], ["Other reasons", 15.6]], "whatsapp_alt_contact": [["UNABLE_TO_FIND", 27.5], ["FRAUD_PRANK", 20.5], ["LATE_DELIVERY", 10.9], ["COURIER_UNREACHABLE", 7.3], ["DELAY_CUSTOMER_LEFT", 5.9], ["FOOD_QUALITY_SPILLAGE", 5.1], ["UNPROFESSIONAL_BEHAVIOUR", 4.4], ["ADDRESS_INCOMPLETE_MISSTATED", 3.6], ["Other reasons", 14.8]]}, "rider": {"address_navigation": [["UNABLE_TO_FIND", 66.2], ["FRAUD_PRANK", 8.0], ["UNPROFESSIONAL_BEHAVIOUR", 5.3], ["DELAY_CUSTOMER_LEFT", 4.7], ["ADDRESS_INCOMPLETE_MISSTATED", 3.8], ["LATE_DELIVERY", 3.2], ["FOOD_QUALITY_SPILLAGE", 3.1], ["WRONG_ORDER_ITEMS_DELIVERED", 2.0], ["Other reasons", 3.7]], "call_me_contact": [["UNABLE_TO_FIND", 27.3], ["ITEM_UNAVAILABLE", 18.1], ["FRAUD_PRANK", 8.3], ["LATE_DELIVERY", 7.6], ["TOO_BUSY", 6.3], ["ADDRESS_INCOMPLETE_MISSTATED", 6.1], ["UNPROFESSIONAL_BEHAVIOUR", 5.4], ["COURIER_UNREACHABLE", 4.2], ["Other reasons", 16.7]], "cancellation": [["FRAUD_PRANK", 24.0], ["UNABLE_TO_FIND", 15.2], ["ITEM_UNAVAILABLE", 12.9], ["LATE_DELIVERY", 9.9], ["MISTAKE_ERROR", 5.0], ["DELAY_CUSTOMER_LEFT", 5.0], ["TOO_BUSY", 4.3], ["ORDER_MODIFICATION_NOT_POSSIBLE", 3.6], ["Other reasons", 20.1]], "cash_payment": [["FRAUD_PRANK", 37.5], ["UNABLE_TO_FIND", 21.2], ["UNPROFESSIONAL_BEHAVIOUR", 8.2], ["LATE_DELIVERY", 6.3], ["ADDRESS_INCOMPLETE_MISSTATED", 4.1], ["FOOD_QUALITY_SPILLAGE", 4.1], ["UNABLE_TO_PAY", 3.7], ["ITEM_UNAVAILABLE", 3.3], ["Other reasons", 11.6]], "eta_urgency": [["UNABLE_TO_FIND", 49.7], ["FRAUD_PRANK", 11.9], ["LATE_DELIVERY", 8.9], ["DELAY_CUSTOMER_LEFT", 6.2], ["UNPROFESSIONAL_BEHAVIOUR", 5.7], ["FOOD_QUALITY_SPILLAGE", 3.0], ["COURIER_UNREACHABLE", 2.8], ["ADDRESS_INCOMPLETE_MISSTATED", 1.9], ["Other reasons", 9.9]], "handover_leave_at_door": [["UNABLE_TO_FIND", 48.4], ["UNPROFESSIONAL_BEHAVIOUR", 20.3], ["WRONG_ORDER_ITEMS_DELIVERED", 7.6], ["FOOD_QUALITY_SPILLAGE", 5.7], ["FRAUD_PRANK", 5.4], ["DELAY_CUSTOMER_LEFT", 4.6], ["LATE_DELIVERY", 2.2], ["COURIER_UNREACHABLE", 1.9], ["Other reasons", 3.9]], "item_order_problem": [["UNABLE_TO_FIND", 16.0], ["ITEM_UNAVAILABLE", 15.7], ["LATE_DELIVERY", 12.0], ["DELAY_CUSTOMER_LEFT", 8.7], ["WRONG_ORDER_ITEMS_DELIVERED", 8.3], ["FRAUD_PRANK", 6.7], ["TOO_BUSY", 6.7], ["COURIER_UNREACHABLE", 6.3], ["Other reasons", 19.6]], "no_call_no_bell": [["UNABLE_TO_FIND", 44.1], ["FRAUD_PRANK", 17.6], ["UNPROFESSIONAL_BEHAVIOUR", 8.8], ["DELAY_CUSTOMER_LEFT", 8.8], ["LATE_DELIVERY", 5.9], ["FOOD_QUALITY_SPILLAGE", 2.9], ["NEVER_DELIVERED", 2.9], ["ADDRESS_INCOMPLETE_MISSTATED", 2.9], ["Other reasons", 6.1]], "other": [["UNABLE_TO_FIND", 52.9], ["FRAUD_PRANK", 10.6], ["UNPROFESSIONAL_BEHAVIOUR", 5.6], ["LATE_DELIVERY", 4.9], ["DELAY_CUSTOMER_LEFT", 4.9], ["ITEM_UNAVAILABLE", 4.7], ["ADDRESS_INCOMPLETE_MISSTATED", 2.7], ["FOOD_QUALITY_SPILLAGE", 2.7], ["Other reasons", 11.0]], "rider_arrival_announce": [["UNABLE_TO_FIND", 69.1], ["FRAUD_PRANK", 8.8], ["DELAY_CUSTOMER_LEFT", 5.1], ["UNPROFESSIONAL_BEHAVIOUR", 4.6], ["FOOD_QUALITY_SPILLAGE", 2.7], ["LATE_DELIVERY", 2.5], ["WRONG_ORDER_ITEMS_DELIVERED", 2.1], ["COURIER_UNREACHABLE", 1.7], ["Other reasons", 3.4]], "whatsapp_alt_contact": [["UNABLE_TO_FIND", 48.2], ["ADDRESS_INCOMPLETE_MISSTATED", 13.2], ["FRAUD_PRANK", 12.3], ["UNPROFESSIONAL_BEHAVIOUR", 8.8], ["LATE_DELIVERY", 7.0], ["COURIER_UNREACHABLE", 1.8], ["FOOD_QUALITY_SPILLAGE", 1.8], ["WRONG_ORDER_ITEMS_DELIVERED", 1.8], ["Other reasons", 5.1]]}};
+
+// ---- helpers ----
+function hex2rgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+function mix(a,b,t){const A=hex2rgb(a),B=hex2rgb(b);return`rgb(${Math.round(A[0]+(B[0]-A[0])*t)},${Math.round(A[1]+(B[1]-A[1])*t)},${Math.round(A[2]+(B[2]-A[2])*t)})`;}
+function liftColor(l){
+  const t=Math.max(-1.5,Math.min(1.5,Math.log2(l)))/1.5; // clamp log2 to [-1.5,1.5] -> [-1,1]
+  return t>=0 ? mix('#ffffff','#c2410c',t) : mix('#ffffff','#1d4ed8',-t);
+}
+function liftText(l){return Math.abs(Math.log2(l))>0.9?'#fff':'#1f2937';}
+
+function barRow(name,pct,color,maxScale){
+  const w=Math.max(1,(pct/maxScale)*100);
+  return `<div class="row"><div class="name">${name}</div>
+    <div class="barwrap"><div class="bar" style="width:${w}%;background:${color}"></div></div>
+    <div class="val">${fmtPct(pct)}</div></div>`;
+}
+
+// 1. reasons split by initiator — two ranked groups
+const custSorted  = [...topics].sort((a,b)=>b.cust-a.cust);
+const riderSorted = [...topics].sort((a,b)=>b.rider-a.rider);
+document.getElementById('custGroup').innerHTML =
+  custSorted.map(t=>barRow(t.label,t.cust,'#2563eb',62)).join('');
+document.getElementById('riderGroup').innerHTML =
+  riderSorted.map(t=>barRow(t.label,t.rider,'#0d9488',62)).join('');
+// combined table, sorted by overall share, showing both group shares
+const quote = arr => arr.map(x=>`“${x}”`).join(', ');
+document.getElementById('topicTable').innerHTML =
+  topics.map(t=>{
+    const ex = examples[t.k];
+    const exHtml = ex ? `<div style="margin-top:6px;font-size:12px;line-height:1.5">
+        <span style="color:#2563eb;font-weight:600">Customer:</span> <span style="color:#475569">${quote(ex.c)}</span><br>
+        <span style="color:#0d9488;font-weight:600">Rider:</span> <span style="color:#475569">${quote(ex.r)}</span>
+      </div>` : '';
+    return `<tr><td><b>${t.label}</b></td>
+    <td style="color:#2563eb;font-variant-numeric:tabular-nums">${fmtPct(t.cust)}</td>
+    <td style="color:#0d9488;font-variant-numeric:tabular-nums">${fmtPct(t.rider)}</td>
+    <td class="def">${t.def}${exHtml}</td></tr>`;
+  }).join('');
+
+// 2b. real customer "Address & directions" messages
+document.getElementById('addrMsgs').innerHTML = addrCustomerMsgs.map(([m,f])=>
+  `<span style="display:inline-block;background:#eff6ff;border:1px solid #dbeafe;color:#1e3a8a;border-radius:8px;padding:5px 10px;margin:3px 4px 3px 0;font-size:12.5px">“${m}” <span style="color:#93a3b8;font-size:11px">×${f.toLocaleString('en-US')}</span></span>`
+).join('');
+
+// 2. cramers V bars (scale 0..0.7)
+document.getElementById('vBars').innerHTML =
+  factorV.map(f=>{
+    const w=(f.v/0.7)*100;
+    return `<div class="row"><div class="name">${f.f}</div>
+      <div class="barwrap"><div class="bar" style="width:${w}%;background:${f.v>=0.3?'#065f46':f.v>=0.1?'#b45309':'#94a3b8'}"></div></div>
+      <div class="val ${f.cls}">${f.v.toFixed(3)}</div></div>`;
+  }).join('');
+
+// 3. heatmap
+(function(){
+  const flat=[]; cols.forEach(c=>c.items.forEach(it=>flat.push(it)));
+  let head1='<tr><th class="topic" style="background:#fff"></th>';
+  cols.forEach(c=>head1+=`<th class="grp" colspan="${c.items.length}">${c.g}</th>`);
+  head1+='</tr>';
+  let head2='<tr><th class="topic" style="background:#fff">Reason</th>';
+  flat.forEach(it=>head2+=`<th>${it[0]}</th>`);
+  head2+='</tr>';
+  let body='';
+  topics.forEach(t=>{
+    body+=`<tr><td class="topic">${t.label}</td>`;
+    flat.forEach(it=>{
+      const l=lift[t.k][it[1]];
+      const disp=l>=10?l.toFixed(0)+'×':(l>=2?l.toFixed(1)+'×':l.toFixed(2));
+      body+=`<td title="${t.label} — ${it[0]}: ${l.toFixed(2)}× average" style="background:${liftColor(l)};color:${liftText(l)}">${disp}</td>`;
+    });
+    body+='</tr>';
+  });
+  document.getElementById('heat').innerHTML=head1+head2+body;
+})();
+
+// 4. initiator (two bars per topic)
+document.getElementById('initBars').innerHTML =
+  topics.map(t=>`
+    <div style="margin:10px 0">
+      <div style="font-size:13px;font-weight:600;margin-bottom:3px">${t.label}</div>
+      ${barRow('Customer',t.cust,'#2563eb',62)}
+      ${barRow('Rider',t.rider,'#0d9488',62)}
+    </div>`).join('');
+
+// 5a. counts tables split by initiator — each row expands to initiator-specific cancel reasons
+const nf = n => n.toLocaleString('en-US');
+const hr = s => s==='Other reasons' ? s : s.toLowerCase().replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+const labelOf = k => (topics.find(t=>t.k===k)||{}).label || k;
+function detailHtml(ini,k,cancN){
+  const rowsF = failByInit[ini][k]||[];
+  const mx = Math.max(...rowsF.map(x=>x[1]));
+  const bars = rowsF.map(([r,p])=>{
+    const isOther = r==='Other reasons';
+    const w = Math.max(1,(p/mx)*100);
+    const col = isOther ? '#cbd5e1' : (p>=20?'#b91c1c':p>=8?'#ea580c':'#f59e0b');
+    return `<div style="display:flex;align-items:center;gap:8px;margin:3px 0">
+      <div style="width:210px;flex:none;font-size:12px;color:${isOther?'#94a3b8':'#374151'}">${hr(r)}</div>
+      <div style="flex:1;background:#eef0f3;border-radius:5px;height:16px;overflow:hidden"><div style="height:100%;width:${w}%;background:${col};border-radius:5px"></div></div>
+      <div style="width:48px;text-align:right;font-size:12px;font-variant-numeric:tabular-nums;color:#6b7280">${p.toFixed(1)}%</div>
+    </div>`;
+  }).join('');
+  return `<div style="padding:6px 4px 10px 14px;border-left:3px solid #fca5a5;margin-left:2px">
+    <div style="font-size:12px;color:#6b7280;margin-bottom:6px">The order's recorded cancel reason for the <b>${nf(cancN)}</b> cancelled orders behind these ${ini}-started "${labelOf(k)}" chats (chat reason taken from the full conversation) — % of these ${nf(cancN)} chats:</div>
+    ${bars}</div>`;
+}
+function renderCounts(ini,tbodyId){
+  const data = Object.keys(initCounts[ini]).map(k=>{
+    const [cancN,delivN]=initCounts[ini][k];
+    return {k,cancN,delivN,tot:cancN+delivN};
+  }).sort((a,b)=>b.tot-a.tot);
+  const tb=document.getElementById(tbodyId);
+  tb.innerHTML = data.map((t,i)=>{
+    const rate=t.cancN/t.tot*100, hot=rate>=5;
+    return `<tr class="exp" data-i="${i}" style="cursor:pointer">
+      <td><span class="caret" style="display:inline-block;width:14px;color:#9ca3af">▸</span><b>${labelOf(t.k)}</b></td>
+      <td style="color:#16a34a;font-variant-numeric:tabular-nums">${nf(t.delivN)}</td>
+      <td style="color:#dc2626;font-variant-numeric:tabular-nums">${nf(t.cancN)}</td>
+      <td style="font-variant-numeric:tabular-nums">${nf(t.tot)}</td>
+    </tr>
+    <tr class="detail" data-d="${i}" style="display:none"><td colspan="4" style="background:#fcfcfd">${detailHtml(ini,t.k,t.cancN)}</td></tr>`;
+  }).join('');
+  tb.querySelectorAll('tr.exp').forEach(row=>{
+    row.addEventListener('click',()=>{
+      const d=tb.querySelector(`tr.detail[data-d="${row.dataset.i}"]`);
+      const open=d.style.display!=='none';
+      d.style.display=open?'none':'table-row';
+      row.querySelector('.caret').textContent=open?'▸':'▾';
+    });
+  });
+}
+renderCounts('customer','countTableCust');
+renderCounts('rider','countTableRider');
+
+// 5b. cancel-rate bars (sorted desc by rate); colour shows above/below the 3.4% base rate
+const baseRate = 3.4, rateScale = 55;
+const byRate = [...topics].map(t=>({...t,rate:t.cancN/(t.cancN+t.delivN)*100})).sort((a,b)=>b.rate-a.rate);
+document.getElementById('cancRateBars').innerHTML =
+  byRate.map(t=>{
+    const w=Math.max(1,(t.rate/rateScale)*100);
+    const col = t.rate>=5 ? '#b91c1c' : t.rate>=baseRate ? '#ea580c' : '#94a3b8';
+    const above = t.rate>=baseRate ? ' ▲' : '';
+    return `<div class="row"><div class="name">${t.label}</div>
+      <div class="barwrap"><div class="bar" style="width:${w}%;background:${col}"></div></div>
+      <div class="val" style="color:${col};font-weight:${t.rate>=baseRate?600:400}">${t.rate.toFixed(1)}%${above}</div></div>`;
+  }).join('');
+
+// 5c. outcome topic-mix bars
+document.getElementById('outBars').innerHTML =
+  topics.map(t=>`
+    <div style="margin:10px 0">
+      <div style="font-size:13px;font-weight:600;margin-bottom:3px">${t.label}</div>
+      ${barRow('Cancelled',t.canc,'#dc2626',35)}
+      ${barRow('Delivered',t.deliv,'#16a34a',35)}
+    </div>`).join('');
+
+</script>
+</body>
+</html>
